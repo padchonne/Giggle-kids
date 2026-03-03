@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giggle Premium Store</title>
+
+<link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg,#fff0f6,#f0f9ff);
+  overflow-x:hidden;
+}
+
+/* Smooth fade animation */
+.fade{
+  animation: fadeIn 0.6s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0; transform: translateY(15px);}
+  to{opacity:1; transform: translateY(0);}
+}
+
+nav{
+  display:flex;
+  justify-content:space-between;
+  padding:15px 25px;
+  background:white;
+  position:sticky;
+  top:0;
+  box-shadow:0 4px 20px rgba(0,0,0,0.05);
+  z-index:100;
+}
+nav h1{
+  color:#ec4899;
+  margin:0;
+}
+nav button{
+  background:#ec4899;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+/* Login Page */
+.login-box{
+  max-width:350px;
+  margin:100px auto;
+  background:white;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.1);
+}
+.login-box input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+.login-box button{
+  margin-top:15px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#ec4899;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* Products */
+.container{
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:20px;
+}
+.card{
+  background:white;
+  border-radius:20px;
+  padding:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+  transition:0.4s;
+}
+.card:hover{
+  transform:translateY(-10px) scale(1.03);
+  box-shadow:0 20px 40px rgba(0,0,0,0.1);
+}
+.card img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+  border-radius:15px;
+}
+.card button{
+  background:#ec4899;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+/* Checkout */
+.checkout{
+  padding:20px;
+}
+.checkout input, .checkout select, .checkout textarea{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+.order-btn{
+  margin-top:15px;
+  width:100%;
+  padding:14px;
+  background:#16a34a;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+  transition:0.3s;
+}
+.order-btn:hover{
+  background:#15803d;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="fade">
+  <div class="login-box">
+    <h2>Login to Giggle</h2>
+    <input type="text" id="loginName" placeholder="Enter Name">
+    <input type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- MAIN STORE -->
+<div id="mainStore" style="display:none">
+
+<nav>
+  <h1>GIGGLE PREMIUM</h1>
+  <button onclick="showCheckout()">🛒 Cart (<span id="cartCount">0</span>)</button>
+</nav>
+
+<div class="container" id="productList"></div>
+
+</div>
+
+<!-- CHECKOUT PAGE -->
+<div id="checkoutPage" style="display:none" class="fade checkout">
+  <button onclick="backHome()">⬅ Back</button>
+  <h2>Shipping Address</h2>
+
+  <div id="cartItems"></div>
+  <h3>Total: ₹<span id="totalPrice">0</span></h3>
+
+  <input id="fullName" placeholder="Full Name">
+  <input id="phone" placeholder="Phone Number">
+  <input id="pincode" placeholder="Pincode">
+  <input id="state" placeholder="State">
+  <input id="district" placeholder="District">
+  <textarea id="address" placeholder="House Name / Street / Landmark"></textarea>
+
+  <select id="payment">
+    <option>Cash on Delivery</option>
+    <option>UPI</option>
+  </select>
+
+  <button class="order-btn" onclick="placeOrder()">Place Order</button>
+</div>
+
+<script>
+const WHATSAPP_NUMBER="919645368803";
+
+const products=[
+{id:1,name:"Kids Party Frock",price:899,image:"https://images.unsplash.com/photo-1596462502278-27bfdc403348"},
+{id:2,name:"Women Stylish Dress",price:1499,image:"https://images.unsplash.com/photo-1520975916090-3105956dac38"}
+];
+
+let cart=[];
+
+/* Login */
+function login(){
+  const name=document.getElementById("loginName").value;
+  if(!name){alert("Enter name");return;}
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("mainStore").style.display="block";
+  renderProducts();
+}
+
+/* Render products */
+function renderProducts(){
+  const list=document.getElementById("productList");
+  list.innerHTML="";
+  products.forEach(p=>{
+    list.innerHTML+=`
+    <div class="card fade">
+      <img src="${p.image}">
+      <h3>${p.name}</h3>
+      <p>₹${p.price}</p>
+      <button onclick="addToCart(${p.id})">Add to Cart</button>
+    </div>`;
+  });
+}
+
+function addToCart(id){
+  const product=products.find(p=>p.id===id);
+  const exist=cart.find(i=>i.id===id);
+  if(exist)exist.quantity++;
+  else cart.push({...product,quantity:1});
+  document.getElementById("cartCount").innerText=cart.length;
+}
+
+/* Checkout */
+function showCheckout(){
+  document.getElementById("mainStore").style.display="none";
+  document.getElementById("checkoutPage").style.display="block";
+  renderCart();
+}
+
+function backHome(){
+  document.getElementById("checkoutPage").style.display="none";
+  document.getElementById("mainStore").style.display="block";
+}
+
+function renderCart(){
+  const div=document.getElementById("cartItems");
+  div.innerHTML="";
+  let total=0;
+  cart.forEach(item=>{
+    total+=item.price*item.quantity;
+    div.innerHTML+=`<p>${item.name} x${item.quantity} - ₹${item.price*item.quantity}</p>`;
+  });
+  document.getElementById("totalPrice").innerText=total;
+}
+
+function placeOrder(){
+  const name=document.getElementById("fullName").value;
+  const phone=document.getElementById("phone").value;
+  const pin=document.getElementById("pincode").value;
+  const state=document.getElementById("state").value;
+  const district=document.getElementById("district").value;
+  const address=document.getElementById("address").value;
+  const payment=document.getElementById("payment").value;
+
+  if(!name||!phone||!address){alert("Fill all details");return;}
+
+  let items="";
+  let total=0;
+  cart.forEach(item=>{
+    items+=`• ${item.name} x${item.quantity} - ₹${item.price*item.quantity}%0A`;
+    total+=item.price*item.quantity;
+  });
+
+  const msg=`🛍️ GIGGLE PREMIUM ORDER%0A%0AName:${name}%0APhone:${phone}%0APincode:${pin}%0AState:${state}%0ADistrict:${district}%0AAddress:${address}%0A%0AItems:%0A${items}%0ATotal:₹${total}%0APayment:${payment}`;
+
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`);
+}
+</script>
+
+</body>
+</html>
